@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eng-Kan Translator</title>
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4e54c8;
+            --secondary: #8f94fb;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-color), #e2e2e2);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            background: var(--card-bg);
+            width: 90%;
+            max-width: 400px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .header {
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 16px;
+            resize: none;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        textarea:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-translate {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(78, 84, 200, 0.4);
+            transition: 0.3s;
+        }
+
+        .btn-translate:active {
+            transform: scale(0.96);
+        }
+
+        .output-container {
+            position: relative;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .btn-small {
+            background: #f0f0f0;
+            color: #555;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: bold;
+            flex: 1;
+            margin: 0 5px;
+            transition: 0.3s;
+        }
+
+        .btn-small:hover { background: #e0e0e0; }
+        
+        /* Loading Animation */
+        .loading {
+            display: none;
+            text-align: center;
+            font-size: 14px;
+            color: var(--primary);
+            font-weight: bold;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="header">
+            <i class="fa-solid fa-language"></i> EN-KN Translator
+        </div>
+
+        <!-- English Input -->
+        <textarea id="eng-text" placeholder="Enter English text here... (ಇಲ್ಲಿ ಇಂಗ್ಲಿಷ್ ಟೈಪ್ ಮಾಡಿ)"></textarea>
+
+        <!-- Translate Button -->
+        <button class="btn-translate" id="translate-btn">Translate (ಅನುವಾದಿಸಿ)</button>
+        
+        <div class="loading" id="loading-msg"><i class="fa-solid fa-spinner fa-spin"></i> ಅನುವಾದವಾಗುತ್ತಿದೆ...</div>
+
+        <!-- Kannada Output -->
+        <div class="output-container">
+            <textarea id="kan-text" placeholder="ಕನ್ನಡ ಅನುವಾದ ಇಲ್ಲಿ ಬರುತ್ತದೆ..." readonly></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn-small" id="clear-btn"><i class="fa-solid fa-eraser"></i> Clear</button>
+            <button class="btn-small" id="copy-btn"><i class="fa-solid fa-copy"></i> Copy</button>
+        </div>
+    </div>
+
+    <script>
+        const translateBtn = document.getElementById('translate-btn');
+        const engText = document.getElementById('eng-text');
+        const kanText = document.getElementById('kan-text');
+        const loadingMsg = document.getElementById('loading-msg');
+        const copyBtn = document.getElementById('copy-btn');
+        const clearBtn = document.getElementById('clear-btn');
+
+        // Google Translate API (100% Accurate)
+        translateBtn.addEventListener('click', async () => {
+            let text = engText.value.trim();
+            if (!text) {
+                alert("Please enter some text to translate! (ಮೊದಲು ಇಂಗ್ಲಿಷ್ ಟೈಪ್ ಮಾಡಿ)");
+                return;
+            }
+
+            // Show Loading
+            loadingMsg.style.display = 'block';
+            kanText.value = '';
+
+            try {
+                // Google Translate GTX Free Link
+                let url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=kn&dt=t&q=${encodeURIComponent(text)}`;
+                
+                let response = await fetch(url);
+                let data = await response.json();
+                
+                // ಗೂಗಲ್ ನೀಡುವ ಡೇಟಾದಿಂದ ಅನುವಾದವನ್ನು ಮಾತ್ರ ಬೇರ್ಪಡಿಸುವುದು
+                let translatedText = '';
+                for (let i = 0; i < data[0].length; i++) {
+                    translatedText += data[0][i][0];
+                }
+                
+                kanText.value = translatedText;
+            } catch (error) {
+                kanText.value = "Error! ಇಂಟರ್ನೆಟ್ ಕನೆಕ್ಷನ್ ಪರಿಶೀಲಿಸಿ.";
+            } finally {
+                // Hide Loading
+                loadingMsg.style.display = 'none';
+            }
+        });
+
+        // Copy Button Function
+        copyBtn.addEventListener('click', () => {
+            if (kanText.value) {
+                kanText.select();
+                document.execCommand("copy");
+                alert("Text Copied! (ಅನುವಾದ ಕಾಪಿ ಆಗಿದೆ)");
+            }
+        });
+
+        // Clear Button Function
+        clearBtn.addEventListener('click', () => {
+            engText.value = '';
+            kanText.value = '';
+        });
+    </script>
+</body>
+</html>
